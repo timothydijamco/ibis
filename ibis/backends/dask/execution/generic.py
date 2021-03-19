@@ -55,6 +55,7 @@ from ..core import execute
 from ..dispatch import execute_node
 from .util import (
     TypeRegistrationDict,
+    convert_pd_object_func,
     make_selected_obj,
     register_types_to_dispatcher,
 )
@@ -88,7 +89,7 @@ DASK_DISPATCH_TYPES: TypeRegistrationDict = {
         ((dd.DataFrame, type(None)), execute_count_frame),
     ],
     ops.NullIfZero: [((dd.Series,), execute_null_if_zero_series)],
-    ops.StringSplit: [((dd.Series, (dd.Series, str)), execute_string_split)],
+    ops.StringSplit: [((dd.Series, (dd.Series, str)), convert_pd_object_func(execute_string_split))],
     ops.Between: [
         (
             (

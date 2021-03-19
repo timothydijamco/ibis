@@ -89,7 +89,7 @@ def execute_series_quantile(op, data, quantile, aggcontext=None, **kwargs):
 def execute_series_quantile_sequence(
     op, data, quantile, aggcontext=None, **kwargs
 ):
-    return list(data.quantile(q=quantile))
+    return np.array(data.quantile(q=quantile), dtype=object)
 
 
 # TODO - aggregations - #2553

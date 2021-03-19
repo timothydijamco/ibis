@@ -66,6 +66,19 @@ def maybe_wrap_scalar(result: Any, expr: ir.Expr) -> Any:
         return result.rename(result_name)
 
 
+def convert_pd_object_func(pandas_exec_func: Callable) -> dd.Series:
+    """
+    Converts a Pandas backend execution function that returns a Pandas object
+    (e.g. `pd.Series`) into one that returns a Dask object (e.g. `dd.Series`).
+    """
+    def dask_exec_func(*args, **kwargs):
+        return dd.from_pandas(
+            pandas_exec_func(*args, **kwargs),
+            npartitions=1,
+        )
+    return dask_exec_func
+
+
 def safe_concat(dfs: List[Union[dd.Series, dd.DataFrame]]) -> dd.DataFrame:
     """
     Concat a list of `dd.Series` or `dd.DataFrame` objects into one DataFrame

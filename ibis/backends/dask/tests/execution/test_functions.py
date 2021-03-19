@@ -156,29 +156,12 @@ def test_clip(t, df, ibis_func, dask_func):
 @pytest.mark.parametrize(
     ('ibis_func', 'dask_func'),
     [
-        (
-            lambda x: x.quantile([0.25, 0.75]),
-            lambda x: list(x.quantile([0.25, 0.75])),
-        )
-    ],
-)
-@pytest.mark.parametrize('column', ['float64_with_zeros', 'int64_with_zeros'])
-def test_quantile_list(t, df, ibis_func, dask_func, column):
-    expr = ibis_func(t[column])
-    result = expr.compile()
-    expected = dask_func(df[column])
-    assert result == expected
-
-
-@pytest.mark.parametrize(
-    ('ibis_func', 'dask_func'),
-    [
         (lambda x: x.quantile(0), lambda x: x.quantile(0)),
         (lambda x: x.quantile(1), lambda x: x.quantile(1)),
         (lambda x: x.quantile(0.5), lambda x: x.quantile(0.5),),
     ],
 )
-def test_quantile_scalar(t, df, ibis_func, dask_func):
+def test_quantile(t, df, ibis_func, dask_func):
     # TODO - interpolation
     result = ibis_func(t.float64_with_zeros).compile()
     expected = dask_func(df.float64_with_zeros)
@@ -187,6 +170,23 @@ def test_quantile_scalar(t, df, ibis_func, dask_func):
     result = ibis_func(t.int64_with_zeros).compile()
     expected = dask_func(df.int64_with_zeros)
     assert result.compute() == expected.compute()
+
+
+@pytest.mark.parametrize(
+    ('ibis_func', 'dask_func'),
+    [
+        (
+            lambda x: x.quantile([0.25, 0.75]),
+            lambda x: np.array(x.quantile([0.25, 0.75]), dtype=object),
+        )
+    ],
+)
+@pytest.mark.parametrize('column', ['float64_with_zeros', 'int64_with_zeros'])
+def test_quantile_multi(t, df, ibis_func, dask_func, column):
+    expr = ibis_func(t[column])
+    result = expr.compile()
+    expected = dask_func(df[column])
+    assert type(result) == type(expected) and np.array_equal(result, expected)
 
 
 @pytest.mark.parametrize(

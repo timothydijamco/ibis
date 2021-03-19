@@ -1,5 +1,6 @@
 from warnings import catch_warnings
 
+import numpy as np
 import pandas.testing as tm
 import pytest
 from pytest import param
@@ -87,7 +88,7 @@ pytestmark = pytest.mark.pandas
         ),
         param(
             lambda s: s.split(' '),
-            lambda s: s.str.split(' '),
+            lambda s: s.apply(lambda x: np.array(x.split(' '), dtype=object)).rename(None),
             id='split_spaces',
         ),
     ],

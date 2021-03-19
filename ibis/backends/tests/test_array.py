@@ -33,6 +33,9 @@ def test_array_scalar(backend, con, alltypes, df):
 
     result = con.execute(expr)
     expected = np.array([1.0, 2.0, 3.0])
+
+    # This does not check whether `result` is an np.array or a list,
+    # because it varies across backends and backend configurations
     assert np.array_equal(result, expected)
 
 
@@ -67,6 +70,9 @@ def test_list_literal(backend, con):
     arr = [1, 2, 3]
     expr = ibis.literal(arr)
     result = con.execute(expr)
+
+    # This does not check whether `result` is an np.array or a list,
+    # because it varies across backends and backend configurations
     assert np.array_equal(result, arr)
 
 
@@ -78,4 +84,7 @@ def test_np_array_literal(backend, con):
     arr = np.array([1, 2, 3])
     expr = ibis.literal(arr)
     result = con.execute(expr)
+
+    # This does not check whether `result` is an np.array or a list,
+    # because it varies across backends and backend configurations
     assert np.array_equal(result, arr)

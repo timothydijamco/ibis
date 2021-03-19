@@ -97,7 +97,16 @@ def zscore(series):
 @udf.reduction(
     input_type=[dt.double], output_type=dt.Array(dt.double),
 )
-def quantiles(series, *, quantiles):
+def quantiles_as_ndarray(series, *, quantiles):
+    """A Reduction UDF with an Array output type returning an np.array"""
+    return np.array(series.quantile(quantiles))
+
+
+@udf.reduction(
+    input_type=[dt.double], output_type=dt.Array(dt.double),
+)
+def quantiles_as_list(series, *, quantiles):
+    """A Reduction UDF with an Array output type returning a list"""
     return list(series.quantile(quantiles))
 
 
@@ -387,23 +396,40 @@ def test_udaf_window_nan():
     tm.assert_frame_equal(result, expected)
 
 
+@pytest.fixture(params=[quantiles_as_ndarray, quantiles_as_list])
+def qs_udf(request):
+    """Variations of quantiles UDFs"""
+    return request.param
+
+
 @pytest.fixture(params=[[0.25, 0.75], [0.01, 0.99]])
 def qs(request):
     return request.param
 
 
-def test_array_return_type_reduction(con, t, df, qs):
-    expr = quantiles(t.b, quantiles=qs)
+def test_array_return_type_reduction(con, t, df, qs_udf, qs):
+    """Test Reduction UDF with Array output type.
+    
+    Confirms that variations (e.g. UDF returns list, or returns ndarray)
+    always result in an ndarray output.
+    """
+    expr = qs_udf(t.b, quantiles=qs)
     result = expr.execute()
-    expected = df.b.quantile(qs)
-    assert result == expected.tolist()
+    expected = np.array(df.b.quantile(qs))
+    assert type(result) == type(expected) and np.array_equal(result, expected)
 
 
-def test_array_return_type_reduction_window(con, t, df, qs):
-    expr = quantiles(t.b, quantiles=qs).over(ibis.window())
+def test_array_return_type_reduction_window(con, t, df, qs_udf, qs):
+    """Test Reduction UDF with Array output type, over a window.
+    
+    Confirms that variations (e.g. UDF returns list, or returns ndarray)
+    always result in an ndarray output.
+    """
+    expr = qs_udf(t.b, quantiles=qs).over(ibis.window())
     result = expr.execute()
-    expected_raw = df.b.quantile(qs).tolist()
+    expected_raw = np.array(df.b.quantile(qs))
     expected = pd.Series([expected_raw] * len(df))
+    assert type(result[0]) == type(expected[0])
     tm.assert_series_equal(result, expected)
 
 

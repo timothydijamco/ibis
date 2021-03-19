@@ -134,6 +134,12 @@ def infer_pandas_timestamp(value):
 @dt.infer.register(np.ndarray)
 def infer_array(value):
     # TODO(kszucs): infer series
+    # TODO(timothydijamco): Should this be in the Pandas backend? Why not ibis.expr.datatypes?
+    np_dtype_name = value.dtype.name
+    if np_dtype_name == 'object':
+        if not value.size == 0:
+            return dt.Array(dt.null)
+        return dt.Array(dt.highest_precedence(map(dt.infer, value)))
     return dt.Array(dt.dtype(value.dtype.name))
 
 
